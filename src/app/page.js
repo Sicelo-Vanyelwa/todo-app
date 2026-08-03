@@ -1,65 +1,280 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import Button from "../frontend/components.js";
+import SideNav from "../frontend/sideNav.js";
 
 export default function Home() {
+  const [tasks, setTasks] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [view, setView] = useState("all");
+  const [sortBy, setSortBy] = useState("due_date");
+  const [searchText, setSearchText] = useState("");
+
+  async function loadTasks() {
+const response = await fetch(
+    `/api/tasks?view=${view}&sort=${sortBy}&search=${encodeURIComponent(searchText)}`
+);
+
+    const data = await response.json();
+    setTasks(data);
+  }
+
+  useEffect(() => {
+    loadTasks();
+  }, [view, sortBy, searchText]);
+
+  async function archiveTask(id) {
+    const response = await fetch("/api/tasks", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    if (response.ok) {
+      loadTasks();
+    } else {
+      alert("Failed to archive task.");
+    }
+  }
+
+  function editTask(id) {
+    const task = tasks.find(t => t.id === id);
+
+    if (!task) {
+      alert("Task not found.");
+      return;
+    }
+
+    setEditingTask(task);
+    setShowForm(true);
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+
+    const taskData = {
+      title: formData.get("title"),
+      description: formData.get("description"),
+      due_date: formData.get("dueDate"),
+      topic: formData.get("topic"),
+      status: formData.get("status"),
+    };
+
+    let response;
+
+    if (editingTask) {
+      response = await fetch("/api/tasks", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: editingTask.id,
+          ...taskData,
+        }),
+      });
+    } else {
+      response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(taskData),
+      });
+    }
+
+    if (response.ok) {
+      event.target.reset();
+      setShowForm(false);
+      setEditingTask(null);
+      loadTasks();
+    } else {
+      alert("Failed to save task.");
+    }
+  }
+
+  function isOverdue(task) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dueDate = new Date(task.due_date);
+
+  return dueDate < today && task.status !== "Complete";
+}
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="container">
+
+      <SideNav
+    onAllTasks={() => setView("all")}
+    onToday={() => setView("today")}
+    onUpcoming={() => setView("upcoming")}
+    onCompleted={() => setView("completed")}
+    onArchived={() => setView("archived")}
+/>
+
+      <main className="mainContent">
+
+        <div className="topBar">
+
+          <Button
+            label="Add Task"
+            onClick={() => {
+              setEditingTask(null);
+              setShowForm(true);
+            }}
+          />
+
+          <select
+            className="sortSelect"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <option value="due_date">Due Date</option>
+            <option value="topic">Topic</option>
+            <option value="status">Status</option>
+          </select>
+
+          <input
+            type="search"
+            placeholder="Search by title, topic, or description..."
+            className="searchBar"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+
         </div>
+
+        {showForm && (
+          <div className="formOverlay">
+
+            <form
+              className="taskForm"
+              onSubmit={handleSubmit}
+            >
+
+              <h2>
+                {editingTask ? "Edit Task" : "Add Task"}
+              </h2>
+
+              <input
+                type="text"
+                name="title"
+                placeholder="Title"
+                defaultValue={editingTask?.title || ""}
+                required
+              />
+
+              <textarea
+                name="description"
+                placeholder="Description"
+                defaultValue={editingTask?.description || ""}
+              />
+
+              <input
+                type="date"
+                name="dueDate"
+                defaultValue={editingTask?.due_date || ""}
+              />
+
+              <input
+                type="text"
+                name="topic"
+                placeholder="Topic"
+                defaultValue={editingTask?.topic || ""}
+              />
+
+              <select
+                name="status"
+                defaultValue={editingTask?.status || "Todo"}
+              >
+                <option value="Todo">Todo</option>
+                <option value="In-Progress">In-Progress</option>
+                <option value="Complete">Complete</option>
+              </select>
+
+              <div className="formButtons">
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingTask(null);
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit">
+                  Save
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+        )}
+
+        <div className="tasksContainer">
+
+          <div className="taskHeader">
+            <span>Topic</span>
+            <span>Description</span>
+            <span>Title</span>
+            <span>Due Date</span>
+            <span>Status</span>
+          </div>
+
+          {tasks.map(task => (
+            <div
+              className="taskRow"
+              key={task.id}
+            >
+
+              <span>{task.topic}</span>
+              <span>{task.description}</span>
+              <span>{task.title}</span>
+              <span className={isOverdue(task) ? "overdueDate" : ""}>
+                     {task.due_date}
+               </span>
+              <span>{task.status}</span>
+
+              <div className="actionButtons">
+
+                {!task.archived && (
+                  <>
+                    <button
+                      className="active-btn"
+                      onClick={() => editTask(task.id)}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      className="active-btn"
+                      onClick={() => archiveTask(task.id)}
+                    >
+                      Archive
+                    </button>
+                  </>
+                )}
+
+              </div>
+
+            </div>
+          ))}
+
+        </div>
+
       </main>
+
     </div>
   );
 }
