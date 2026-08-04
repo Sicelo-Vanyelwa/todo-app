@@ -116,7 +116,7 @@ if (
 
   const dueDate = new Date(task.due_date);
 
-  return dueDate < today && task.status !== "Complete";
+  return dueDate < today && task.status !== "Complete"&&task.archived === 0;
 }
 
   return (
