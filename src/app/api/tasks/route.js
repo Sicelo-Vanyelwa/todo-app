@@ -100,19 +100,34 @@ tasks = db.prepare(`
 }
 
 export async function POST(request) {
-  const task = await request.json();
+    const task = await request.json();
 
-  db.prepare(`
-    INSERT INTO tasks (title, description, due_date, topic)
-    VALUES (?, ?, ?, ?)
-  `).run(
-    task.title,
-    task.description,
-    task.due_date,
-    task.topic
-  );
+    if (
+        !task.title ||
+        !task.description ||
+        !task.due_date ||
+        !task.topic ||
+        !task.status
+    ) {
+        return Response.json(
+            { error: "All fields are required." },
+            { status: 400 }
+        );
+    }
 
-  return Response.json({ success: true });
+    db.prepare(`
+        INSERT INTO tasks
+        (title, description, due_date, topic, status)
+        VALUES (?, ?, ?, ?, ?)
+    `).run(
+        task.title,
+        task.description,
+        task.due_date,
+        task.topic,
+        task.status
+    );
+
+    return Response.json({ success: true });
 }
 
 export async function PATCH(request) {
@@ -130,6 +145,19 @@ export async function PATCH(request) {
 export async function PUT(request) {
     const task = await request.json();
 
+
+        if (
+        !task.title ||
+        !task.description ||
+        !task.due_date ||
+        !task.topic ||
+        !task.status
+    ) {
+        return Response.json(
+            { error: "All fields are required." },
+            { status: 400 }
+        );
+    }
     db.prepare(`
         UPDATE tasks
         SET

@@ -58,13 +58,24 @@ const response = await fetch(
 
     const formData = new FormData(event.target);
 
-    const taskData = {
-      title: formData.get("title"),
-      description: formData.get("description"),
-      due_date: formData.get("dueDate"),
-      topic: formData.get("topic"),
-      status: formData.get("status"),
-    };
+const taskData = {
+    title: formData.get("title")?.trim(),
+    description: formData.get("description")?.trim(),
+    due_date: formData.get("dueDate"),
+    topic: formData.get("topic")?.trim(),
+    status: formData.get("status"),
+};
+
+if (
+    !taskData.title ||
+    !taskData.description ||
+    !taskData.due_date ||
+    !taskData.topic ||
+    !taskData.status
+) {
+    alert("Please fill in all fields.");
+    return;
+}
 
     let response;
 
@@ -162,42 +173,43 @@ const response = await fetch(
               <h2>
                 {editingTask ? "Edit Task" : "Add Task"}
               </h2>
-
               <input
-                type="text"
-                name="title"
-                placeholder="Title"
-                defaultValue={editingTask?.title || ""}
-                required
-              />
+    type="text"
+    name="title"
+    placeholder="Task title"
+    defaultValue={editingTask?.title || ""}
+    required
+/>
 
-              <textarea
-                name="description"
-                placeholder="Description"
-                defaultValue={editingTask?.description || ""}
-              />
+<textarea
+    name="description"
+    defaultValue={editingTask?.description || ""}
+    required
+/>
 
-              <input
-                type="date"
-                name="dueDate"
-                defaultValue={editingTask?.due_date || ""}
-              />
+<input
+    type="date"
+    name="dueDate"
+    defaultValue={editingTask?.due_date || ""}
+    required
+/>
 
-              <input
-                type="text"
-                name="topic"
-                placeholder="Topic"
-                defaultValue={editingTask?.topic || ""}
-              />
+<input
+    type="text"
+    name="topic"
+    defaultValue={editingTask?.topic || ""}
+    required
+/>
 
-              <select
-                name="status"
-                defaultValue={editingTask?.status || "Todo"}
-              >
-                <option value="Todo">Todo</option>
-                <option value="In-Progress">In-Progress</option>
-                <option value="Complete">Complete</option>
-              </select>
+<select
+    name="status"
+    defaultValue={editingTask?.status || "Todo"}
+    required
+>
+    <option value="Todo">Todo</option>
+    <option value="In-Progress">In-Progress</option>
+    <option value="Complete">Complete</option>
+</select>
 
               <div className="formButtons">
 
