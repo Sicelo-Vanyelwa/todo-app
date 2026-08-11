@@ -8,7 +8,9 @@
 ## Installation
 
 git clone <repository-url>
+
 cd todo-app
+
 npm install
 
 ## Run
