@@ -7,7 +7,7 @@
 
 ## Installation
 
-git clone link of repository
+git clone "link of repository"
 
 cd todo-app
 
